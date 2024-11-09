@@ -110,8 +110,6 @@ else
   mkdir -p "$COLLECTOR_DIR"
 fi
 
-[ -f $TMP_FILE ] && rm -f $TMP_FILE
-
 verbose "PROM_FILE: $PROM_FILE"
 verbose "TMP_FILE: $TMP_FILE"
 verbose "HOSTNAME: $HOSTNAME"
