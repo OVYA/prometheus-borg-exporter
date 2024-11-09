@@ -21,7 +21,7 @@ For convenience, you can install this exporter with the command line
 ### Manually
 Copy `borg_exporter.sh` to `/usr/local/bin`.
 
-Copy `borg.env` to `/etc/borg` and replace your repokey and repository in it.
+Copy `borg_exporter.rc` to `/etc/borg_exporter.rc` and replace your repokey and repository in it.
 
 Copy the systemd unit to `/etc/systemd/system` and run 
 
