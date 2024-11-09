@@ -32,6 +32,11 @@ systemctl start prometheus-borg-exporter.timer
 
 Alternative: Use `ExecStartPost` in your borg backupt timer itself to write our the metrics.
 
+## Configuration options
+ * By default, borg_exporter will be quiet if no errors occur. You can use the -v or --verbose option get a progress log as the program runs. If using systemd, you can use journalctl to view the log.
+ * Using the -x or --no-extract option will prevent the exporter from running the ```borg extract``` command. This is useful if running against a remote or very large repository, as the extract command can take a long time to run.
+ * Use -c or --config to specify a different configuration file. The default is /etc/borg_exporter.rc file.
+
 ## Configure your node exporter
 
 You must start the node exporter service with the following parameter: `--collector.textfile.directory=/var/lib/node_exporter/textfile_collector`
