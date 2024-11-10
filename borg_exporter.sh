@@ -7,7 +7,9 @@ CONFIG_EXTRACT=1
 CONFIG_BORG_EXPORTER_RC=/etc/borg_exporter.rc
 
 cleanup() {
-    [ -f "$TMP_FILE" ] && rm -f "$TMP_FILE"
+    if [ -f "$TMP_FILE" ]; then
+      rm -f "$TMP_FILE"
+    fi
 }
 
 trap cleanup EXIT
@@ -166,3 +168,5 @@ verbose "Writing data..."
 } > $TMP_FILE
 
 mv -f $TMP_FILE $PROM_FILE
+
+exit 0
