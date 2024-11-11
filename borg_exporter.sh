@@ -33,6 +33,8 @@ function usage {
     echo "  -h, --help       Display this help message"
     echo "  -x, --no-extract Disable archive extraction, recommended for large/remote repositories"
     echo "  -c, --config     Specify a configuration file (default: /etc/borg_exporter.rc)"
+    echo "  -u, --user       Specify a user to to set as owner of the node exporter file"
+    echo "  -g, --group      Specify a group to to set as owner of the node exporter file"
     exit 0
 }
 
@@ -62,6 +64,8 @@ while [[ "$#" -gt 0 ]]; do
         -h|--help) usage ;;
         -x|--no-extract) CONFIG_EXTRACT=0 ;;
         -c|--config) CONFIG_BORG_EXPORTER_RC="$2"; shift ;;
+        -u|--user) CONFIG_USER="$2"; shift ;;
+        -g|--group) CONFIG_GROUP="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; usage ;;
     esac
     shift
@@ -168,5 +172,13 @@ verbose "Writing data..."
 } > $TMP_FILE
 
 mv -f $TMP_FILE $PROM_FILE
+
+if [ -n "$CONFIG_USER" ]; then
+  chown $CONFIG_USER $PROM_FILE
+fi
+
+if [ -n "$CONFIG_GROUP" ]; then
+  chgrp $CONFIG_GROUP $PROM_FILE
+fi
 
 exit 0
