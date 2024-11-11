@@ -36,6 +36,7 @@ Alternative: Use `ExecStartPost` in your borg backupt timer itself to write our 
  * By default, borg_exporter will be quiet if no errors occur. You can use the -v or --verbose option get a progress log as the program runs. If using systemd, you can use journalctl to view the log.
  * Using the -x or --no-extract option will prevent the exporter from running the ```borg extract``` command. This is useful if running against a remote or very large repository, as the extract command can take a long time to run.
  * Use -c or --config to specify a different configuration file. The default is /etc/borg_exporter.rc file.
+ * Use -u or --user and -g or --group to specify the user and group of the file created by the exporter.
 
 ## Configure your node exporter
 
