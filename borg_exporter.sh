@@ -23,7 +23,7 @@ function verbose {
 }
 
 function error {
-  log "Error: $@" >&2
+  log "Error: " "$@" >&2
   exit 1
 }
 
@@ -44,16 +44,16 @@ function calc_bytes {
 
   case "$UNIT" in
     kB)
-      echo $NUM | awk '{ print $1 * 1024 }'
+      echo "$NUM" | awk '{ print $1 * 1024 }'
       ;;
     MB)
-      echo $NUM | awk '{ print $1 * 1024 * 1024 }'
+      echo "$NUM" | awk '{ print $1 * 1024 * 1024 }'
       ;;
     GB)
-      echo $NUM | awk '{ print $1 * 1024 * 1024 * 1024 }'
+      echo "$NUM" | awk '{ print $1 * 1024 * 1024 * 1024 }'
       ;;
     TB)
-      echo $NUM | awk '{ print $1 * 1024 * 1024 * 1024 * 1024 }'
+      echo "$NUM" | awk '{ print $1 * 1024 * 1024 * 1024 * 1024 }'
       ;;
   esac
 }
@@ -81,12 +81,12 @@ if ! command -v dateutils.ddiff > /dev/null 2>&1; then
   exit 1
 fi
 
-[ -e $CONFIG_BORG_EXPORTER_RC ] || {
+[ -e "$CONFIG_BORG_EXPORTER_RC" ] || {
   error "Configuration file $CONFIG_BORG_EXPORTER_RC not found"
   exit 1
 }
 
-source $CONFIG_BORG_EXPORTER_RC
+source "$CONFIG_BORG_EXPORTER_RC"
 
 [ -z "$BORG_PASSPHRASE" ] && {
   error "BORG_PASSPHRASE is not set in $CONFIG_BORG_EXPORTER_RC"
@@ -169,16 +169,16 @@ verbose "Writing data..."
   echo "borg_total_size{host=\"${HOSTNAME}\"} $TOTAL_SIZE"
   echo "borg_total_size_compressed{host=\"${HOSTNAME}\"} $TOTAL_SIZE_COMPRESSED"
   echo "borg_total_size_dedup{host=\"${HOSTNAME}\"} $TOTAL_SIZE_DEDUP"
-} > $TMP_FILE
+} > "$TMP_FILE"
 
-mv -f $TMP_FILE $PROM_FILE
+mv -f "$TMP_FILE" "$PROM_FILE"
 
 if [ -n "$CONFIG_USER" ]; then
-  chown $CONFIG_USER $PROM_FILE
+  chown "$CONFIG_USER" "$PROM_FILE"
 fi
 
 if [ -n "$CONFIG_GROUP" ]; then
-  chgrp $CONFIG_GROUP $PROM_FILE
+  chgrp "$CONFIG_GROUP" "$PROM_FILE"
 fi
 
 exit 0
