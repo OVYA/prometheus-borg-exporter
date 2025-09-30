@@ -9,9 +9,10 @@ Export borg information to prometheus.
  * Node Exporter with textfile collector
  * [Borg](https://github.com/borgbackup/borg)
 
-## Install
+## Installation
 
-You must install this node exporter in each host that you want to monitor.
+You must install this node exporter in each host that you want to monitor.  
+Note that an Archlinux package is available [here](https://git.h.oluflorenzen.de/finkregh/archlinux-prometheus-borg-exporter).
 
 ### With the Makefile
 

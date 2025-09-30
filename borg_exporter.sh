@@ -7,7 +7,7 @@ CONFIG_EXTRACT=1
 CONFIG_BORG_EXPORTER_RC=/etc/borg_exporter.rc
 
 cleanup() {
-    if [ -f "$TMP_FILE" ]; then
+    if [ ! -z ${TMP_FILE+x} ] && [ -f "$TMP_FILE" ]; then
       rm -f "$TMP_FILE"
     fi
 }
@@ -88,11 +88,6 @@ fi
 
 source "$CONFIG_BORG_EXPORTER_RC"
 
-[ -z "$BORG_PASSPHRASE" ] && {
-  error "BORG_PASSPHRASE is not set in $CONFIG_BORG_EXPORTER_RC"
-  exit 1
-}
-
 [ -z "$REPOSITORY" ] && {
   error "REPOSITORY is not set in $CONFIG_BORG_EXPORTER_RC"
   exit 1
@@ -121,13 +116,13 @@ verbose "TMP_FILE: $TMP_FILE"
 verbose "HOSTNAME: $HOSTNAME"
 
 verbose "Retrieving repository list..."
-ARCHIVES=$(BORG_PASSPHRASE="$BORG_PASSPHRASE" borg list "$REPOSITORY")
+ARCHIVES=$(borg list "$REPOSITORY")
 COUNTER=0
 
 COUNTER=$(echo "$ARCHIVES" | wc -l)
 
 verbose "Retrieving last archive..."
-LAST_ARCHIVE=$(BORG_PASSPHRASE="$BORG_PASSPHRASE" borg list --last 1 "$REPOSITORY" | sort -nr | head -n 1)
+LAST_ARCHIVE=$(borg list --last 1 "$REPOSITORY" | sort -nr | head -n 1)
 LAST_ARCHIVE_NAME=$(echo $LAST_ARCHIVE | awk '{print $1}')
 LAST_ARCHIVE_DATE=$(echo $LAST_ARCHIVE | awk '{print $3" "$4}')
 LAST_ARCHIVE_TIMESTAMP=$(date -d "$LAST_ARCHIVE_DATE" +"%s")
@@ -136,14 +131,14 @@ NB_HOUR_FROM_LAST_BCK=$(dateutils.ddiff "$LAST_ARCHIVE_DATE" "$CURRENT_DATE" -f 
 
 if [ "$CONFIG_EXTRACT" == "1" ]; then
   verbose "Extracting archive..."
-  BORG_EXTRACT_EXIT_CODE=$(BORG_PASSPHRASE="$BORG_PASSPHRASE" borg extract --dry-run "$REPOSITORY::$LAST_ARCHIVE_NAME" > /dev/null 2>&1; echo $?)
+  BORG_EXTRACT_EXIT_CODE=$(borg extract --dry-run "$REPOSITORY::$LAST_ARCHIVE_NAME" > /dev/null 2>&1; echo $?)
 else
   verbose "Skipping archive extraction"
   BORG_EXTRACT_EXIT_CODE=0
 fi
 
 verbose "Retrieving repository info..."
-BORG_INFO=$(BORG_PASSPHRASE="$BORG_PASSPHRASE" borg info "$REPOSITORY::$LAST_ARCHIVE_NAME")
+BORG_INFO=$(borg info "$REPOSITORY::$LAST_ARCHIVE_NAME")
 
 verbose "Calculating sizes..."
 # byte size
@@ -154,30 +149,32 @@ TOTAL_SIZE=$(calc_bytes $(echo "$BORG_INFO" | grep "All archives" | awk '{print 
 TOTAL_SIZE_COMPRESSED=$(calc_bytes $(echo "$BORG_INFO" | grep "All archives" | awk '{print $5}') $(echo "$BORG_INFO" | grep "All archives" | awk '{print $6}'))
 TOTAL_SIZE_DEDUP=$(calc_bytes $(echo "$BORG_INFO" | grep "All archives" | awk '{print $7}') $(echo "$BORG_INFO" | grep "All archives" | awk '{print $8}'))
 
+_metadata="host=\"${HOSTNAME}\",instance=\"${BORGEXPORTER_INSTANCE}\""
+
 verbose "Writing data..."
 {
-  echo "borg_last_archive_timestamp{host=\"${HOSTNAME}\"} $LAST_ARCHIVE_TIMESTAMP"
-  echo "borg_extract_exit_code{host=\"${HOSTNAME}\"} $BORG_EXTRACT_EXIT_CODE"
-  echo "borg_hours_from_last_archive{host=\"${HOSTNAME}\"} $NB_HOUR_FROM_LAST_BCK"
-  echo "borg_archives_count{host=\"${HOSTNAME}\"} $COUNTER"
-  echo "borg_files_count{host=\"${HOSTNAME}\"} $(echo "$BORG_INFO" | grep "Number of files" | awk '{print $4}')"
-  echo "borg_chunks_unique{host=\"${HOSTNAME}\"} $(echo "$BORG_INFO" | grep "Chunk index" | awk '{print $3}')"
-  echo "borg_chunks_total{host=\"${HOSTNAME}\"} $(echo "$BORG_INFO" | grep "Chunk index" | awk '{print $4}')"
-  echo "borg_last_size{host=\"${HOSTNAME}\"} $LAST_SIZE"
-  echo "borg_last_size_compressed{host=\"${HOSTNAME}\"} $LAST_SIZE_COMPRESSED"
-  echo "borg_last_size_dedup{host=\"${HOSTNAME}\"} $LAST_SIZE_DEDUP"
-  echo "borg_total_size{host=\"${HOSTNAME}\"} $TOTAL_SIZE"
-  echo "borg_total_size_compressed{host=\"${HOSTNAME}\"} $TOTAL_SIZE_COMPRESSED"
-  echo "borg_total_size_dedup{host=\"${HOSTNAME}\"} $TOTAL_SIZE_DEDUP"
+  echo "borg_last_archive_timestamp{${_metadata}} $LAST_ARCHIVE_TIMESTAMP"
+  echo "borg_extract_exit_code{${_metadata}} $BORG_EXTRACT_EXIT_CODE"
+  echo "borg_hours_from_last_archive{${_metadata}} $NB_HOUR_FROM_LAST_BCK"
+  echo "borg_archives_count{${_metadata}} $COUNTER"
+  echo "borg_files_count{${_metadata}} $(echo "$BORG_INFO" | grep "Number of files" | awk '{print $4}')"
+  echo "borg_chunks_unique{${_metadata}} $(echo "$BORG_INFO" | grep "Chunk index" | awk '{print $3}')"
+  echo "borg_chunks_total{${_metadata}} $(echo "$BORG_INFO" | grep "Chunk index" | awk '{print $4}')"
+  echo "borg_last_size{${_metadata}} $LAST_SIZE"
+  echo "borg_last_size_compressed{${_metadata}} $LAST_SIZE_COMPRESSED"
+  echo "borg_last_size_dedup{${_metadata}} $LAST_SIZE_DEDUP"
+  echo "borg_total_size{${_metadata}} $TOTAL_SIZE"
+  echo "borg_total_size_compressed{${_metadata}} $TOTAL_SIZE_COMPRESSED"
+  echo "borg_total_size_dedup{${_metadata}} $TOTAL_SIZE_DEDUP"
 } > "$TMP_FILE"
 
 mv -f "$TMP_FILE" "$PROM_FILE"
 
-if [ -n "$CONFIG_USER" ]; then
+if [ -n "${CONFIG_USER+x}" ]; then
   chown "$CONFIG_USER" "$PROM_FILE"
 fi
 
-if [ -n "$CONFIG_GROUP" ]; then
+if [ -n "${CONFIG_GROUP+x}" ]; then
   chgrp "$CONFIG_GROUP" "$PROM_FILE"
 fi
 
